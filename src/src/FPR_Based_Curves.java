@@ -17,15 +17,16 @@ public class FPR_Based_Curves {
 	static int testi = 0;
 	static int reali = 0;
 	
-	
+	//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
+	static ArrayList<double[]> result = new ArrayList<double[]>();
 	
 	private static void init() {
-		File file_test = new File("data//2,0.145,0.015.txt");
-		File file_real = new File("data//real_data.txt");
+		File file_test = new File("data//result.txt");
+		File file_real = new File("data//true_labels_255Days.txt");
 		BufferedReader reader_test = null;
 		BufferedReader reader_real = null;
-		test = new int[200][34];
-		real = new int[200][34];
+		test = new int[300][34];
+		real = new int[300][34];
 		try {
 			reader_test = new BufferedReader(new FileReader(file_test));
 			reader_real = new BufferedReader(new FileReader(file_real));
@@ -57,114 +58,34 @@ public class FPR_Based_Curves {
 		System.out.print("]\n");
 	}
 	
-	//FPR vs TPR(Forecasting and Detection)
 	private static void calcForeDete() {
-		ArrayList<FPR_X> result = new ArrayList<FPR_X>();
-		System.out.println("##########FPR vs TPR(Forecasting and Detection)##########");
 		for (int i=7; i<testi-7; i++) {
 			int win[] = new int[34];
-			for (int j=-7; j<=7; j++) {
+			for (int j=-7; j<0; j++) {//forecasting
+			//for (int j=-7; j<=7; j++) {//forecasting and detection
 				for (int k=0; k<34; k++) {
 					win[k] += real[i+j][k];
 				}
 			}
-			printVector("test",test[i]);
-			printVector("real",win);
-			int[] temp = compare(test[i], win);//TP,TN,FP,FN
-			int TP = temp[0];
-			int TN = temp[1];
-			int FP = temp[2];
-			int FN = temp[3];
-			System.out.print("["+i+"] "+"TP: "+TP+"   TN: "+TN+"   FP: "+FP+"   FN: "+FN);
-			result.add(new FPR_X((double)FP/(FP+TN), (double)TP/(TP+FN)));
-			DecimalFormat df = new DecimalFormat("0.00");
-			String FPR, TPR, precision, recall, score;
-			if(FP+TN == 0)
-				FPR = df.format(0);
-			else
-				FPR = df.format(1.0*FP/(FP+TN));
-			if(TP+FN == 0)
-				TPR = df.format(0);
-			else
-				TPR = df.format(1.0*TP/(TP+FN));
-			if(TP+FP == 0)
-				precision = df.format(0);
-			else
-				precision = df.format(1.0*TP/(TP+FP));
-			if(FP+TN == 0)
-				recall = df.format(0);
-			else
-				recall = df.format(1.0*FP/(FP+TN));
-			if(Double.parseDouble(precision)+Double.parseDouble(recall)==0)
-				score = df.format(0);
-			else
-				score = df.format(2.0*Double.parseDouble(precision)*Double.parseDouble(recall)/(Double.parseDouble(precision)+Double.parseDouble(recall)));
-			System.out.print("      FPR: " + FPR + "   TPR: " + TPR + "   precision: "+precision 
-					+ "   recall: "+recall + "   score: " + score + "\n");
-			System.out.println();
-		}
-		Collections.sort(result, new myComparator());
-		DrawPlot.draw("FPR vs TPR(Forecasting and Detection)", "False Positive Rate(From 0-1 FP Per-day)", 
-				"True Positive Rate(Forecasting and Detection)", result);
-	}
-	
-	//FPR vs TPR(Forecasting)
-	private static void calcFore() {
-		ArrayList<FPR_X> result = new ArrayList<FPR_X>();
-		System.out.println("##########FPR vs TPR(Forecasting)##########");
-		for (int i=7; i<testi-7; i++) {
-			int win[] = new int[34];
-			for (int j=-7; j<0; j++) {
-				for (int k=0; k<34; k++) {
-					win[k] += real[i+j][k];
-				}
-			}
-			printVector("test",test[i]);
-			printVector("real",win);
-			int[] temp = compare(test[i], win);//TP,TN,FP,FN
-			int TP = temp[0];
-			int TN = temp[1];
-			int FP = temp[2];
-			int FN = temp[3];
-			System.out.print("["+i+"] "+"TP: "+TP+"   TN: "+TN+"   FP: "+FP+"   FN: "+FN);
-			result.add(new FPR_X((double)temp[2]/(temp[2]+temp[1]), (double)temp[0]/(temp[0]+temp[3])));
-			DecimalFormat df = new DecimalFormat("0.00");
-			String FPR, TPR, precision, recall, score;
-			if(FP+TN == 0)
-				FPR = df.format(0);
-			else
-				FPR = df.format(1.0*FP/(FP+TN));
-			if(TP+FN == 0)
-				TPR = df.format(0);
-			else
-				TPR = df.format(1.0*TP/(TP+FN));
-			if(TP+FP == 0)
-				precision = df.format(0);
-			else
-				precision = df.format(1.0*TP/(TP+FP));
-			if(FP+TN == 0)
-				recall = df.format(0);
-			else
-				recall = df.format(1.0*FP/(FP+TN));
-			if(Double.parseDouble(precision)+Double.parseDouble(recall)==0)
-				score = df.format(0);
-			else
-				score = df.format(2.0*Double.parseDouble(precision)*Double.parseDouble(recall)/(Double.parseDouble(precision)+Double.parseDouble(recall)));
-			System.out.print("      FPR: " + FPR + "   TPR: " + TPR + "   precision: "+precision 
-					+ "   recall: "+recall + "   score: " + score + "\n");
-			System.out.println();
-		}
-		Collections.sort(result, new myComparator());
-		DrawPlot.draw("FPR vs TPR(Forecasting)", "False Positive Rate(From 0-1 FP Per-day)", 
-				"True Positive Rate(Forecasting)", result);
-	}
-	
-	//FPR vs Lead Time(Forecasting)
-	private static void calcLead() {
-		int lead = 0;
-		int leadcnt = 0;
-		ArrayList<FPR_X> result = new ArrayList<FPR_X>();
-		for (int i=7; i<reali-7; i++) {
+			double[] temp = compare(test[i], win);//TP,TN,FP,FN
+			double TP = temp[0];
+			double TN = temp[1];
+			double FP = temp[2];
+			double FN = temp[3];
+			double FPR, TPR, precision, recall, score;
+			FPR = (FP+TN==0) ? 0 : 1.0*FP/(FP+TN);
+			TPR = (TP+FN==0) ? 0 : 1.0*TP/(TP+FN);
+			precision = (TP+FP==0) ? 0 : 1.0*TP/(TP+FP);
+			recall = (FP+TN==0) ? 0 : 1.0*FP/(FP+TN);
+			score = (precision+recall==0) ? 0 : 2.0*precision*recall/(precision+recall);
+			temp[4] = FPR;
+			temp[5] = TPR;
+			temp[6] = precision;
+			temp[7] = recall;
+			temp[8] = score;
+			
+			double lead=0, lag=0;
+			int leadcnt=0, lagcnt=0;
 			for (int k=0; k<34; k++) {
 				if (real[i][k]==1) {
 					int sign = 0;
@@ -182,18 +103,8 @@ public class FPR_Based_Curves {
 					}
 				}
 			}
-			/*
-			 * 
-			 */
-		}
-	}
-	
-	//FPR vs Lag Time(Detection)
-	private static void calcLag() {
-		int lag = 0;
-		int lagcnt = 0;
-		ArrayList<FPR_X> result = new ArrayList<FPR_X>();
-		for (int i=7; i<reali-7; i++) {
+			temp[9] = lead;
+			temp[10] = leadcnt;
 			for (int k=0; k<34; k++) {
 				if (real[i][k]==1) {
 					int sign = 0;
@@ -211,14 +122,65 @@ public class FPR_Based_Curves {
 					}
 				}
 			}
-			/*
-			 * 
-			 */
+			temp[11] = lag;
+			temp[12] = lagcnt;
+			result.add(temp);
 		}
 	}
 	
-	private static int[] compare(int[] test, int[] real) {
-		int result[] = new int[4];
+	private static void rocCurve() {
+		ArrayList<FPR_X> plot = new ArrayList<FPR_X>(); 
+		Collections.sort(result, new myComparator());
+		double TP=0,TN=0,FP=0,FN=0;
+		double FPR, TPR;
+		double T=0, F=0;
+		for (int i=0; i<result.size(); i++) {
+			T = T+result.get(i)[0]+result.get(i)[1];
+			F = F+result.get(i)[2]+result.get(i)[3];
+		}
+		for (int i=0; i<result.size(); i++) {
+			TP+=result.get(i)[0];
+			TN+=result.get(i)[1];
+			FP+=result.get(i)[2];
+			FN+=result.get(i)[3];
+			double x,y;
+			x = (TP+TN)/T;
+			y = (FP+FN)/F;
+//			FPR = (FP+TN==0) ? 0 : FP/(FP+TN);
+//			TPR = (TP+FN==0) ? 0 : TP/(TP+FN);
+//			System.out.println("["+(i+1)+"]"+" FPR: "+FPR+"\tTPR: "+TPR);
+			plot.add(new FPR_X(x,y));
+		}
+		DrawPlot.draw("FPR vs TPR(Forecasting and Detection)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"True Positive Rate(Forecasting and Detection)", plot);
+	}
+	
+	private static void curve() {
+		ArrayList<FPR_X> plot = new ArrayList<FPR_X>(); 
+		Collections.sort(result, new myComparator());
+		double TP=0,TN=0,FP=0,FN=0;
+		double FPR, TPR;
+		double T=0, F=0;
+		for (int i=0; i<result.size(); i++) {
+			T = T+result.get(i)[0]+result.get(i)[1];
+			F = F+result.get(i)[2]+result.get(i)[3];
+		}
+		for (int i=0; i<result.size(); i++) {
+			TP+=result.get(i)[0];
+			TN+=result.get(i)[1];
+			FP+=result.get(i)[2];
+			FN+=result.get(i)[3];
+			FPR = (FP+TN==0) ? 0 : FP/(FP+TN);
+			TPR = (TP+FN==0) ? 0 : TP/(TP+FN);
+			System.out.println("["+(i+1)+"]"+" FPR: "+FPR+"\tTPR: "+TPR);
+			plot.add(new FPR_X(FPR,TPR));
+		}
+		DrawPlot.draw("FPR vs TPR(Forecasting and Detection)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"True Positive Rate(Forecasting and Detection)", plot);
+	}
+	
+	private static double[] compare(int[] test, int[] real) {
+		double result[] = new double[20];
 		int TP=0, TN=0, FP=0, FN=0;
 		for (int i=0; i<34; i++) {
 			if (test[i]!=0 && real[i]!=0)
@@ -240,7 +202,8 @@ public class FPR_Based_Curves {
 	public static void main(String[] args) {
 		init();
 		calcForeDete();
-		calcFore();
+		curve();
+		rocCurve();
 	}
 	
 }
@@ -255,12 +218,12 @@ class FPR_X{
 	}
 }
 
-class myComparator implements Comparator<FPR_X> { 
-    public int compare(FPR_X one, FPR_X another) {
+class myComparator implements Comparator<double[]> { 
+    public int compare(double[] one, double[] another) {
          double i = 0;
-         i = one.FPR - another.FPR;
+         i = one[8] - another[8];
          if(i == 0) {
-        	 double j = one.X - another.X;
+        	 double j = one[5] - another[5];
         	 if (j == 0)
         		 return 0;
         	 else if (j < 0)

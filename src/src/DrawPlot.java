@@ -27,7 +27,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 public class DrawPlot extends ApplicationFrame {
 
-    public DrawPlot(final String title,final String x_label,final String y_label,ArrayList<FPR_X> result) {
+    public DrawPlot(final String title,final String x_label,final String y_label,ArrayList<Point> result) {
         super(title);
         final XYDataset dataset = createDataset(result);
         final JFreeChart chart = createChart(dataset, title, x_label, y_label);
@@ -36,10 +36,10 @@ public class DrawPlot extends ApplicationFrame {
         setContentPane(chartPanel);
     }
 
-    private XYDataset createDataset(ArrayList<FPR_X> result) {
+    private XYDataset createDataset(ArrayList<Point> result) {
     	final XYSeries series = new XYSeries("GASDM");
         for(int i=0;i<result.size();i++)
-        	series.add(result.get(i).FPR, result.get(i).X);
+        	series.add(result.get(i).x, result.get(i).y);
         final XYSeriesCollection dataset = new XYSeriesCollection();
         dataset.addSeries(series);
         return dataset;
@@ -71,7 +71,7 @@ public class DrawPlot extends ApplicationFrame {
         return chart;
     }
 
-    public static void draw(final String title,final String x_label,final String y_label,ArrayList<FPR_X> result){        
+    public static void draw(final String title,final String x_label,final String y_label,ArrayList<Point> result){        
         final DrawPlot demo = new DrawPlot(title,x_label,y_label,result);
         demo.pack();
         RefineryUtilities.centerFrameOnScreen(demo);

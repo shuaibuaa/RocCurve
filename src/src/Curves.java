@@ -16,7 +16,6 @@ public class Curves {
 	static int reali = 0;
 	
 	private static void init() {
-		File file_test = new File("data//result.txt");
 		File file_real = new File("data//true_labels_255Days.txt");
 		BufferedReader reader_test = null;
 		BufferedReader reader_real = null;
@@ -265,7 +264,8 @@ class Point{
 	}
 }
 
-class scoreComparator implements Comparator<double[]> { 
+class scoreComparator implements Comparator<double[]> {
+	//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
     public int compare(double[] one, double[] another) {
          double i = 0;
          i = one[8] - another[8];
@@ -286,6 +286,7 @@ class scoreComparator implements Comparator<double[]> {
 }
 
 class leadComparator implements Comparator<double[]> { 
+	//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
     public int compare(double[] one, double[] another) {
          double i = 0;
          if (one[10]==0)
@@ -293,15 +294,8 @@ class leadComparator implements Comparator<double[]> {
          if (another[10]==0)
         	 return -1;
          i = one[9]/one[10] - another[9]/another[10];
-         if(i == 0) {
-        	 double j = one[8] - another[8];
-        	 if (j == 0)
-        		 return 0;
-        	 else if (j < 0)
-        		 return -1;
-        	 else
-        		 return 1;
-         } 
+         if(i == 0)
+        	 return 0;
          else if (i < 0)
         	 return -1;
          else
@@ -310,6 +304,7 @@ class leadComparator implements Comparator<double[]> {
 }
 
 class lagComparator implements Comparator<double[]> { 
+	//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
     public int compare(double[] one, double[] another) {
          double i = 0;
          if (one[12]==0)
@@ -317,15 +312,8 @@ class lagComparator implements Comparator<double[]> {
          if (another[12]==0)
         	 return -1;
          i = one[11]/one[12] - another[11]/another[12];
-         if(i == 0) {
-        	 double j = one[8] - another[8];
-        	 if (j == 0)
-        		 return 0;
-        	 else if (j < 0)
-        		 return 1;
-        	 else
-        		 return -1;
-         } 
+         if(i == 0)
+        	 return 0;
          else if (i < 0)
         	 return 1;
          else

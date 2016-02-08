@@ -27,21 +27,32 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 public class DrawPlot extends ApplicationFrame {
 
-    public DrawPlot(final String title,final String x_label,final String y_label,ArrayList<Point> result) {
+    public DrawPlot(final String title,final String x_label,final String y_label,ArrayList<Point> gasdm,ArrayList<Point> nphgs,ArrayList<Point> eventtree) {
         super(title);
-        final XYDataset dataset = createDataset(result);
+        final XYDataset dataset = createDataset(gasdm, nphgs, eventtree);
         final JFreeChart chart = createChart(dataset, title, x_label, y_label);
         final ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
         setContentPane(chartPanel);
     }
 
-    private XYDataset createDataset(ArrayList<Point> result) {
-    	final XYSeries series = new XYSeries("GASDM");
-        for(int i=0;i<result.size();i++)
-        	series.add(result.get(i).x, result.get(i).y);
+    private XYDataset createDataset(ArrayList<Point> gasdm, ArrayList<Point> nphgs, ArrayList<Point> eventtree) {
+    	final XYSeries series1 = new XYSeries("GASDM");
+        for(int i=0;i<gasdm.size();i++)
+        	series1.add(gasdm.get(i).x, gasdm.get(i).y);
+        
+        final XYSeries series2 = new XYSeries("NPHGS");
+        for(int i=0;i<nphgs.size();i++)
+        	series2.add(nphgs.get(i).x, nphgs.get(i).y);
+        
+        final XYSeries series3 = new XYSeries("EventTree");
+        for(int i=0;i<eventtree.size();i++)
+        	series3.add(eventtree.get(i).x, eventtree.get(i).y);
+        
         final XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(series);
+        dataset.addSeries(series1);
+        dataset.addSeries(series2);
+        dataset.addSeries(series3);
         return dataset;
     }
 
@@ -67,12 +78,16 @@ public class DrawPlot extends ApplicationFrame {
         final NumberAxis rangeAxis = new NumberAxis("Y-Axis");
         rangeAxis.setRange(0.0,1.0);
         rangeAxis.setTickUnit(new NumberTickUnit(0.1));
+       
+        final XYPlot plot = chart.getXYPlot();
+        final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        plot.setRenderer(renderer);
                 
         return chart;
     }
 
-    public static void draw(final String title,final String x_label,final String y_label,ArrayList<Point> result){        
-        final DrawPlot demo = new DrawPlot(title,x_label,y_label,result);
+    public static void draw(final String title,final String x_label,final String y_label,ArrayList<Point> gasdm, ArrayList<Point> nphgs, ArrayList<Point> eventtree){        
+        final DrawPlot demo = new DrawPlot(title,x_label,y_label,gasdm, nphgs, eventtree);
         demo.pack();
         RefineryUtilities.centerFrameOnScreen(demo);
         demo.setVisible(true);

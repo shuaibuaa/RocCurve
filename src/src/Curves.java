@@ -1,42 +1,69 @@
 package src;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 
 public class Curves {
 	
-	static int test[][]; // from d0 to dn
+	static int gasdm[][]; // from d0 to dn
+	static int nphgs[][];
+	static int eventtree[][];
 	static int real[][]; // from d0 to dn
-	static int testi = 0;
+	static int gasdmi = 0;
+	static int nphgsi = 0;
+	static int eventtreei = 0;
 	static int reali = 0;
 	
 	private static void init() {
-		File file_real = new File("data//true_labels_255Days.txt");
-		BufferedReader reader_test = null;
+		File file_gasdm = new File("data//GASDM_result_276.txt");
+		File file_nphgs = new File("data//NPHGS_result_276.txt");
+		File file_eventtree = new File("data//EventTree_result_276.txt");
+		File file_real = new File("data//true_labels_276.txt");
+		BufferedReader reader_gasdm = null;
+		BufferedReader reader_nphgs = null;
+		BufferedReader reader_eventtree = null;
 		BufferedReader reader_real = null;
-		test = new int[300][34];
+		gasdm = new int[300][34];
+		nphgs = new int[300][34];
+		eventtree = new int[300][34];
 		real = new int[300][34];
 		try {
-			reader_test = new BufferedReader(new FileReader(file_test));
+			reader_gasdm = new BufferedReader(new FileReader(file_gasdm));
+			reader_nphgs = new BufferedReader(new FileReader(file_nphgs));
+			reader_eventtree = new BufferedReader(new FileReader(file_eventtree));
 			reader_real = new BufferedReader(new FileReader(file_real));
-			String str_test = null;
+			String str_gasdm = null;
+			String str_nphgs = null;
+			String str_eventtree = null;
 			String str_real = null;
-			while ((str_test = reader_test.readLine()) != null && 
-					(str_real = reader_real.readLine()) != null) {
-				String[] str_tests;
+			while ((str_gasdm = reader_gasdm.readLine()) != null && (str_nphgs = reader_nphgs.readLine()) != null
+					&& (str_eventtree = reader_eventtree.readLine()) != null && (str_real = reader_real.readLine()) != null) {
+				String[] str_gasdms;
+				String[] str_nphgss;
+				String[] str_eventtrees;
 				String[] str_reals;
-				str_tests = str_test.split("\\ ");
+				str_gasdms = str_gasdm.split("\\ ");
+				str_nphgss = str_nphgs.split("\\ ");
+				str_eventtrees = str_eventtree.split("\\ ");
 				str_reals = str_real.split("\\ ");
 				for (int i=0; i<34; i++) {
-					test[testi][i] = Integer.parseInt(str_tests[i+2]);
+					gasdm[gasdmi][i] = Integer.parseInt(str_gasdms[i+2]);
+					nphgs[nphgsi][i] = Integer.parseInt(str_nphgss[i+2]);
+					eventtree[eventtreei][i] = Integer.parseInt(str_eventtrees[i+2]);
 					real[reali][i] = Integer.parseInt(str_reals[i+2]);
 				}
-				testi++;
+				gasdmi++;
+				nphgsi++;
+				eventtreei++;
 				reali++;
 			}
 		} catch (IOException e) {
@@ -44,17 +71,25 @@ public class Curves {
 		}
 	}
 	
-	private static void plotForeDete() {
-		//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
+	private static ArrayList<double[]> foreDete(String type) {
 		ArrayList<double[]> result = new ArrayList<double[]>();
-		for (int i=7; i<testi-7; i++) {
+		for (int i=7; i<gasdmi-7; i++) {
 			int win[] = new int[34];
 			for (int j=-7; j<=7; j++) {//forecasting and detection
 				for (int k=0; k<34; k++) {
 					win[k] += real[i+j][k];
 				}
 			}
-			double[] temp = compare(test[i], win);//TP,TN,FP,FN
+			
+			double[] temp=null;
+			if (type.equals("gasdm")){
+				temp = compare(gasdm[i], win);//TP,TN,FP,FN
+			} else if (type.equals("nphgs")) {
+				temp = compare(nphgs[i], win);//TP,TN,FP,FN
+			} else if (type.equals("eventtree")) {
+				temp = compare(eventtree[i], win);//TP,TN,FP,FN
+			}
+			
 			double TP = temp[0];
 			double TN = temp[1];
 			double FP = temp[2];
@@ -77,11 +112,27 @@ public class Curves {
 				if (real[i][k]==1) {
 					int sign = 0;
 					for (int j=-7; j<0; j++) {
-						if (test[i+j][k]==1) {
-							lead += -j;
-							leadcnt++;
-							sign = 1;
-							break;
+						if(type.equals("gasdm")){
+							if (gasdm[i+j][k]==1) {
+								lead += -j;
+								leadcnt++;
+								sign = 1;
+								break;
+							}
+						}else if(type.equals("nphgs")){
+							if (nphgs[i+j][k]==1) {
+								lead += -j;
+								leadcnt++;
+								sign = 1;
+								break;
+							}
+						}else if(type.equals("eventtree")){
+							if (eventtree[i+j][k]==1) {
+								lead += -j;
+								leadcnt++;
+								sign = 1;
+								break;
+							}
 						}
 					}
 					if (sign == 0){
@@ -96,11 +147,27 @@ public class Curves {
 				if (real[i][k]==1) {
 					int sign = 0;
 					for (int j=0; j<=7; j++) {
-						if (test[i+j][k]==1) {
-							lag += j;
-							lagcnt++;
-							sign = 1;
-							break;
+						if(type.equals("gasdm")){
+							if (gasdm[i+j][k]==1) {
+								lag += j;
+								lagcnt++;
+								sign = 1;
+								break;
+							}
+						}else if(type.equals("nphgs")){
+							if (nphgs[i+j][k]==1) {
+								lag += j;
+								lagcnt++;
+								sign = 1;
+								break;
+							}
+						}else if(type.equals("eventtree")){
+							if (eventtree[i+j][k]==1) {
+								lag += j;
+								lagcnt++;
+								sign = 1;
+								break;
+							}
 						}
 					}
 					if (sign == 0){
@@ -113,31 +180,110 @@ public class Curves {
 			temp[12] = lagcnt;
 			result.add(temp);
 		}
-		ArrayList<Point> plot = new ArrayList<Point>();
-		plot = TPRCurve(result);
-		DrawPlot.draw("FPR vs TPR(Forecasting and detection)", "False Positive Rate(From 0-1 FP Per-day)", 
-				"True Positive Rate(Forecasting and detection)", plot);
-		plot.clear();
-		plot = leadCurve(result);
-		DrawPlot.draw("FPR vs Lead Time(Forecasting)", "False Positive Rate(From 0-1 FP Per-day)", 
-				"Lead Time(Forecasting)", plot);
-		plot.clear();
-		plot = lagCurve(result);
-		DrawPlot.draw("FPR vs Lag Time(Detection)", "False Positive Rate(From 0-1 FP Per-day)", 
-				"Lag Time(Detection)", plot);
+		return result;
 	}
 	
-	private static void plotFore() {
+	private static void output(String title, String xlabel, String ylabel, ArrayList<Point> gasdm,
+			ArrayList<Point>nphgs, ArrayList<Point>eventtree){
+		String filename = title;
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+			writer.write("title: "+title);
+			writer.newLine();
+			writer.write("x_lable: "+xlabel);
+			writer.newLine();
+			writer.write("y_lable: "+ylabel);
+			writer.newLine();
+			writer.write("GASDM: ");
+			writer.newLine();
+			for (int i=0; i<gasdm.size(); i++) {
+				writer.write(Double.toString(gasdm.get(i).x));
+				writer.write(" ");
+				writer.write(Double.toString(gasdm.get(i).y));
+				writer.newLine();
+			}
+			writer.write("NPHGS: ");
+			writer.newLine();
+			for (int i=0; i<nphgs.size(); i++) {
+				writer.write(Double.toString(nphgs.get(i).x));
+				writer.write(" ");
+				writer.write(Double.toString(nphgs.get(i).y));
+				writer.newLine();
+			}
+			writer.write("EventTree: ");
+			writer.newLine();
+			for (int i=0; i<eventtree.size(); i++) {
+				writer.write(Double.toString(eventtree.get(i).x));
+				writer.write(" ");
+				writer.write(Double.toString(eventtree.get(i).y));
+				writer.newLine();
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void plotForeDete() {
 		//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
+		ArrayList<double[]> resultgasdm = new ArrayList<double[]>();
+		ArrayList<double[]> resultnphgs = new ArrayList<double[]>();
+		ArrayList<double[]> resulteventtree = new ArrayList<double[]>();
+		
+		resultgasdm = foreDete("gasdm");
+		resultnphgs = foreDete("nphgs");
+		resulteventtree = foreDete("eventtree");
+		
+		ArrayList<Point> plotgasdm = new ArrayList<Point>();
+		ArrayList<Point> plotnphgs = new ArrayList<Point>();
+		ArrayList<Point> ploteventtree = new ArrayList<Point>();
+		plotgasdm = TPRCurve(resultgasdm);
+		plotnphgs = TPRCurve(resultnphgs);
+		ploteventtree = TPRCurve(resulteventtree);
+		DrawPlot.draw("FPR vs TPR(Forecasting and detection)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"True Positive Rate(Forecasting and detection)", plotgasdm, plotnphgs, ploteventtree);
+		output("FPR vs TPR(Forecasting and detection)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"True Positive Rate(Forecasting and detection)", plotgasdm, plotnphgs, ploteventtree);
+		plotgasdm.clear();
+		plotnphgs.clear();
+		ploteventtree.clear();
+		plotgasdm = leadCurve(resultgasdm);
+		plotnphgs = leadCurve(resultnphgs);
+		ploteventtree = leadCurve(resulteventtree);
+		DrawPlot.draw("FPR vs Lead Time(Forecasting)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"Lead Time(Forecasting)", plotgasdm, plotnphgs, ploteventtree);
+		output("FPR vs Lead Time(Forecasting)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"Lead Time(Forecasting)", plotgasdm, plotnphgs, ploteventtree);
+		plotgasdm.clear();
+		plotnphgs.clear();
+		ploteventtree.clear();
+		plotgasdm = lagCurve(resultgasdm);
+		plotnphgs = lagCurve(resultnphgs);
+		ploteventtree = lagCurve(resulteventtree);
+		DrawPlot.draw("FPR vs Lag Time(Detection)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"Lag Time(Detection)", plotgasdm, plotnphgs, ploteventtree);
+		output("FPR vs Lag Time(Detection)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"Lag Time(Detection)", plotgasdm, plotnphgs, ploteventtree);
+	}
+	
+	private static ArrayList<double[]> fore(String type) {
 		ArrayList<double[]> result = new ArrayList<double[]>();
-		for (int i=7; i<testi-7; i++) {
+		
+		for (int i=7; i<gasdmi-7; i++) {
 			int win[] = new int[34];
 			for (int j=-7; j<0; j++) {//forecasting
 				for (int k=0; k<34; k++) {
 					win[k] += real[i+j][k];
 				}
 			}
-			double[] temp = compare(test[i], win);//TP,TN,FP,FN
+			double[] temp=null;
+			if(type.equals("gasdm")) {
+				temp = compare(gasdm[i], win);//TP,TN,FP,FN
+			} else if(type.equals("nphgs")) {
+				temp = compare(nphgs[i], win);//TP,TN,FP,FN
+			} else if(type.equals("eventtree")) {
+				temp = compare(eventtree[i], win);//TP,TN,FP,FN
+			}
 			double TP = temp[0];
 			double TN = temp[1];
 			double FP = temp[2];
@@ -155,10 +301,29 @@ public class Curves {
 			temp[8] = score;
 			result.add(temp);
 		}
-		ArrayList<Point> plot = new ArrayList<Point>();
-		plot = TPRCurve(result);
+		return result;
+	}
+	
+	private static void plotFore() {
+		//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
+		ArrayList<double[]> resultgasdm = new ArrayList<double[]>();
+		ArrayList<double[]> resultnphgs = new ArrayList<double[]>();
+		ArrayList<double[]> resulteventtree = new ArrayList<double[]>();
+		
+		resultgasdm = fore("gasdm");
+		resultnphgs = fore("nphgs");
+		resulteventtree = fore("eventtree");
+		
+		ArrayList<Point> plotgasdm = new ArrayList<Point>();
+		ArrayList<Point> plotnphgs = new ArrayList<Point>();
+		ArrayList<Point> ploteventtree = new ArrayList<Point>();
+		plotgasdm = TPRCurve(resultgasdm);
+		plotnphgs = TPRCurve(resultnphgs);
+		ploteventtree = TPRCurve(resulteventtree);
 		DrawPlot.draw("FPR vs TPR(Forecasting)", "False Positive Rate(From 0-1 FP Per-day)", 
-				"True Positive Rate(Forecasting)", plot);
+				"True Positive Rate(Forecasting)", plotgasdm, plotnphgs, ploteventtree);
+		output("FPR vs TPR(Forecasting)", "False Positive Rate(From 0-1 FP Per-day)", 
+				"True Positive Rate(Forecasting)", plotgasdm, plotnphgs, ploteventtree);
 	}
 	
 	private static ArrayList<Point> TPRCurve(ArrayList<double[]> result) {
@@ -246,12 +411,23 @@ public class Curves {
 		return result;
 	}	
 	
+	public static String formatFloatNumber(Double value) {
+        if(value != null){
+            if(value.doubleValue() != 0.00){
+                java.text.DecimalFormat df = new java.text.DecimalFormat("###.00");
+                return df.format(value.doubleValue());
+            }else{
+                return "0.00";
+            }
+        }
+        return "";
+    }
+	
 	public static void main(String[] args) {
 		init();
 		plotForeDete();
 		plotFore();
 	}
-	
 }
 
 class Point{
@@ -289,17 +465,20 @@ class leadComparator implements Comparator<double[]> {
 	//[0]TP,[1]TN,[2]FP,[3]FN,[4]FPR,[5]TPR,[6]precision,[7]recall,[8]score,[9]lead,[10]leadcnt,[11]lag,[12]lagcnt
     public int compare(double[] one, double[] another) {
          double i = 0;
-         if (one[10]==0)
-        	 return 1;
-         if (another[10]==0)
-        	 return -1;
-         i = one[9]/one[10] - another[9]/another[10];
-         if(i == 0)
-        	 return 0;
-         else if (i < 0)
-        	 return -1;
-         else
-             return 1;
+         if (one[10]==0 || another[10]==0) {
+        	 if(one[10]==0 && another[10]==0)
+        		 return 0;
+        	 else if(one[10]==0 && another[10]!=0)
+        		 return 1;
+        	 else return -1;
+         } 
+         else {
+	         if ((one[9]/one[10] - another[9]/another[10]) < 0)
+	        	 return -1;
+	         else if ((one[9]/one[10] - another[9]/another[10]) > 0)
+	        	 return 1;
+	         else return 0;
+         }
     }
 }
 
